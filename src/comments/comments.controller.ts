@@ -13,7 +13,16 @@ import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment } from './comment.entity';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiNotFoundResponse,
+  ApiGoneResponse,
+  ApiForbiddenResponse,
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiCreatedResponse,
+} from '@nestjs/swagger';
 
 @ApiTags('Comments')
 @Controller('comments')
@@ -21,11 +30,12 @@ export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @ApiOperation({ summary: 'Create a new comment' })
-  @ApiResponse({
+  @ApiCreatedResponse({
     status: 201,
     description: 'Comment created successfully.',
     type: Comment,
   })
+  @ApiBadRequestResponse({ description: 'An input error has happened.' })
   @Post()
   create(@Body() createCommentDto: CreateCommentDto): Promise<Comment> {
     return this.commentsService.create(createCommentDto);
@@ -36,10 +46,12 @@ export class CommentsController {
     description:
       'Retrieve all comments associated with a specific request ID and module name.',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Returns comments for a specific request ID and module.',
     type: [Comment],
+  })
+  @ApiBadRequestResponse({
+    description: 'Request ID and module name required.',
   })
   @Get()
   findAllByRequestAndModule(
@@ -53,7 +65,10 @@ export class CommentsController {
   }
 
   @ApiOperation({ summary: 'Update a comment by ID' })
-  @ApiResponse({ status: 200, description: 'Comment updated successfully.' })
+  @ApiOkResponse({ description: 'Comment updated successfully.' })
+  @ApiForbiddenResponse({ description: 'User does not have permission.' })
+  @ApiNotFoundResponse({ description: 'Comment not found.' })
+  @ApiGoneResponse({ description: 'Comment has already been deleted.' })
   @Put(':id')
   update(
     @Param('id') id: string,
@@ -63,7 +78,10 @@ export class CommentsController {
   }
 
   @ApiOperation({ summary: 'Remove a comment by ID' })
-  @ApiResponse({ status: 200, description: 'Comment removed successfully.' })
+  @ApiOkResponse({ description: 'Comment removed successfully.' })
+  @ApiForbiddenResponse({ description: 'User does not have permission.' })
+  @ApiNotFoundResponse({ description: 'Comment not found.' })
+  @ApiGoneResponse({ description: 'Comment has already been deleted.' })
   @Delete(':id')
   remove(
     @Param('id') id: string,
