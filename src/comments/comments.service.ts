@@ -10,6 +10,7 @@ import { Comment } from './comment.entity';
 import { CommentHistory } from './comment-history.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import * as sanitizeHtml from 'sanitize-html';
 
 @Injectable()
 export class CommentsService {
@@ -20,17 +21,25 @@ export class CommentsService {
     private commentsHistoryRepository: Repository<CommentHistory>,
   ) {}
 
-  create(createCommentDto: CreateCommentDto): Promise<Comment> {
+  async create(createCommentDto: CreateCommentDto): Promise<Comment> {
     if (createCommentDto.parentCommentId) {
-      const parentExists = this.commentsHistoryRepository.existsBy({
+      const parentExists = await this.commentsRepository.existsBy({
         id: createCommentDto.parentCommentId,
       });
       if (!parentExists) {
         throw new BadRequestException('Replying to unknown comment.');
       }
     }
-    const comment = this.commentsRepository.create(createCommentDto);
+    const sanitizedComment = sanitizeHtml(createCommentDto.comment);
+    const comment = this.commentsRepository.create({
+      ...createCommentDto,
+      comment: sanitizedComment,
+    });
     return this.commentsRepository.save(comment);
+  }
+
+  findOne(id: string): Promise<Comment> {
+    return this.commentsRepository.findOneBy({ id });
   }
 
   findAllByRequestAndModule(
@@ -47,6 +56,7 @@ export class CommentsService {
     updateCommentDto: UpdateCommentDto,
   ): Promise<Comment> {
     const comment = await this.findOne(id);
+
     if (comment === null || comment.deletedAt !== null) {
       throw new NotFoundException();
     }
@@ -64,8 +74,10 @@ export class CommentsService {
       createdAt: comment.createdAt,
     });
 
+    const sanitizedComment = sanitizeHtml(updateCommentDto.comment);
     await this.commentsRepository.update(id, {
       ...updateCommentDto,
+      comment: sanitizedComment,
       updatedByUserId: updateCommentDto.updatedByUserId,
       updatedAt: new Date(),
     });
@@ -89,9 +101,5 @@ export class CommentsService {
       deletedAt: new Date(),
       deletedByUserId: userId,
     });
-  }
-
-  private findOne(id: string): Promise<Comment> {
-    return this.commentsRepository.findOneBy({ id });
   }
 }
