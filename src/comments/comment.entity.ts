@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Entity,
   Column,
@@ -43,19 +43,19 @@ export class Comment {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @Column({ nullable: true })
   updatedByUserId: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @Column({ nullable: true })
   deletedAt: Date;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @Column({ nullable: true })
   deletedByUserId: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @Column({ nullable: true })
   parentCommentId: string;
 

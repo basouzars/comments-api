@@ -2,6 +2,7 @@ import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
+  GoneException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -143,12 +144,9 @@ describe('CommentsService', () => {
       const result = await service.update('comment-id', updateCommentDto);
 
       expect(sanitizeHtml).toHaveBeenCalledWith(updateCommentDto.comment);
-      expect(commentsRepository.update).toHaveBeenCalledWith('comment-id', {
-        ...updateCommentDto,
-        comment: sanitizedComment,
-        updatedByUserId: updateCommentDto.updatedByUserId,
-        updatedAt: expect.any(Date),
-      });
+      expect(comment.comment).toBe(sanitizedComment);
+      expect(comment.updatedByUserId).toBe(updateCommentDto.updatedByUserId);
+      expect(comment.updatedAt).toBeInstanceOf(Date);
       expect(result).toBe(comment);
     });
 
@@ -161,6 +159,21 @@ describe('CommentsService', () => {
           updatedByUserId: 'user-id',
         }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw GoneException if comment is deleted', async () => {
+      const comment = new Comment();
+      comment.userId = 'user-id';
+      comment.deletedAt = new Date();
+
+      jest.spyOn(service, 'findOne').mockResolvedValue(comment);
+
+      await expect(
+        service.update('comment-id', {
+          comment: 'test',
+          updatedByUserId: 'user-id',
+        }),
+      ).rejects.toThrow(GoneException);
     });
 
     it('should throw UnauthorizedException if user is not allowed to update', async () => {
@@ -199,6 +212,18 @@ describe('CommentsService', () => {
 
       await expect(service.remove('invalid-id', 'user-id')).rejects.toThrow(
         NotFoundException,
+      );
+    });
+
+    it('should throw GoneException if comment is already deleted', async () => {
+      const comment = new Comment();
+      comment.userId = 'user-id';
+      comment.deletedAt = new Date();
+
+      jest.spyOn(service, 'findOne').mockResolvedValue(comment);
+
+      await expect(service.remove('comment-id', 'user-id')).rejects.toThrow(
+        GoneException,
       );
     });
 

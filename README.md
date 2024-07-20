@@ -37,9 +37,8 @@ This project is a RESTful API for managing comments. It is built with [NestJS](h
 
 ## Security Features
 
-- CSRF Protection: The API uses CSRF tokens to protect against Cross-Site Request Forgery attacks.
 - Security Headers: Helmet is used to set various HTTP headers for security.
-Sanitizing comments: HTML sanitization is used in comments before saving to the database.
+- Sanitizing comments: HTML sanitization is used in comments before saving to the database.
 
 ## Contributing
 
