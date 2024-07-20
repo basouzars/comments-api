@@ -22,29 +22,25 @@ This project is a RESTful API for managing comments. It is built with [NestJS](h
    cd comments-api
    ```
 
-2. Run docker:
+2. Run docker build:
    ```bash
-   git clone https://github.com/basouzars/comments-api.git
-   cd comments-api
+   docker build .
    ```
 
-bash
-Copy code
-yarn build
-yarn start:prod
-Usage
-API Endpoints
-POST /comments - Create a new comment
-GET /comments - Retrieve all comments
-GET /comments/:id - Retrieve a comment by ID
-PUT /comments/:id - Update a comment by ID
-DELETE /comments/:id - Delete a comment by ID
-Security Features
-CSRF Protection: The API uses CSRF tokens to protect against Cross-Site Request Forgery attacks.
-Security Headers: Helmet is used to set various HTTP headers for security.
-Input Sanitization: User input is sanitized to prevent XSS attacks.
-Contributing
-Contributions are welcome! Please fork the repository and create a pull request with your changes.
+## Usage:
+
+1. Run docker compose:
+   ```bash
+   docker-compose up
+   ```
+2. Access localhost:3000/api
+
+## Security Features
+
+- CSRF Protection: The API uses CSRF tokens to protect against Cross-Site Request Forgery attacks.
+- Security Headers: Helmet is used to set various HTTP headers for security.
+- Contributing
+- Contributions are welcome! Please fork the repository and create a pull request with your changes.
 
 License
 This project is licensed under the MIT License. See the LICENSE file for details.
