@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -14,31 +15,41 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Comment } from './comment.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('comments')
+@ApiTags('Comments')
 @Controller('comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @ApiOperation({ summary: 'Create a new comment' })
-  @ApiResponse({ status: 201, description: 'Comment created successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Comment created successfully.',
+    type: Comment,
+  })
   @Post()
   create(@Body() createCommentDto: CreateCommentDto): Promise<Comment> {
     return this.commentsService.create(createCommentDto);
   }
 
-  @ApiOperation({ summary: 'Get all comments' })
-  @ApiResponse({ status: 200, description: 'Returns all comments.' })
+  @ApiOperation({
+    summary: 'Get all comments by request ID and module',
+    description:
+      'Retrieve all comments associated with a specific request ID and module name.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns comments for a specific request ID and module.',
+    type: [Comment],
+  })
   @Get()
-  findAll(): Promise<Comment[]> {
-    return this.commentsService.findAll();
-  }
-
-  @ApiOperation({ summary: 'Get a comment by ID' })
-  @ApiResponse({ status: 200, description: 'Returns a comment by ID.' })
-  @ApiResponse({ status: 404, description: 'Comment not found.' })
-  @Get(':id')
-  findOne(@Param('id') id: string): Promise<Comment> {
-    return this.commentsService.findOne(id);
+  findAllByRequestAndModule(
+    @Query('requestId') requestId: string,
+    @Query('module') module: string,
+  ): Promise<Comment[]> {
+    if (!requestId || !module) {
+      throw new BadRequestException('Request ID and module name are required.');
+    }
+    return this.commentsService.findAllByRequestAndModule(requestId, module);
   }
 
   @ApiOperation({ summary: 'Update a comment by ID' })
