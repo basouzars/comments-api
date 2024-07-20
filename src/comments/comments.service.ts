@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  GoneException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -25,16 +26,20 @@ export class CommentsService {
     if (createCommentDto.parentCommentId) {
       const parentExists = await this.commentsRepository.existsBy({
         id: createCommentDto.parentCommentId,
+        deletedAt: null,
       });
+
       if (!parentExists) {
         throw new BadRequestException('Replying to unknown comment.');
       }
     }
+
     const sanitizedComment = sanitizeHtml(createCommentDto.comment);
     const comment = this.commentsRepository.create({
       ...createCommentDto,
       comment: sanitizedComment,
     });
+
     return this.commentsRepository.save(comment);
   }
 
@@ -57,8 +62,12 @@ export class CommentsService {
   ): Promise<Comment> {
     const comment = await this.findOne(id);
 
-    if (comment === null || comment.deletedAt !== null) {
+    if (comment === null) {
       throw new NotFoundException();
+    }
+
+    if (comment.deletedAt) {
+      throw new GoneException();
     }
 
     if (comment.userId !== updateCommentDto.updatedByUserId) {
@@ -74,21 +83,22 @@ export class CommentsService {
       createdAt: comment.createdAt,
     });
 
-    const sanitizedComment = sanitizeHtml(updateCommentDto.comment);
-    await this.commentsRepository.update(id, {
-      ...updateCommentDto,
-      comment: sanitizedComment,
-      updatedByUserId: updateCommentDto.updatedByUserId,
-      updatedAt: new Date(),
-    });
+    comment.comment = sanitizeHtml(updateCommentDto.comment);
+    comment.updatedAt = new Date();
+    comment.updatedByUserId = updateCommentDto.updatedByUserId;
+    await this.commentsRepository.update(id, comment);
 
     return comment;
   }
 
   async remove(id: string, userId: string): Promise<void> {
     const comment = await this.findOne(id);
-    if (comment === null || comment.deletedAt !== null) {
+    if (comment === null) {
       throw new NotFoundException();
+    }
+
+    if (comment.deletedAt) {
+      throw new GoneException();
     }
 
     if (comment.userId !== userId) {
